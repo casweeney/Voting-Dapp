@@ -1,1 +1,2 @@
-VotingFactory Contract address = 0x14E96EE02f395154e869Fa85886aE9533578Ba4f
+VotingFactory Rinkeby Contract address = 0x14E96EE02f395154e869Fa85886aE9533578Ba4f
+VotingFactory Ropsten Contract address = 0x0519C43Cdf9B75Ba0a265B3330655A0cAF6D4ED3
