@@ -1,4 +1,4 @@
-// SPDX:License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.1;
 
 import './interface/IVotingPoll.sol';
@@ -23,19 +23,15 @@ contract VotingPoll is IVotingPoll {
         }
     }
 
-    function vote(uint candidate) public {
+    function vote(uint candidate) public override {
         Voter storage sender = voters[msg.sender];
         require(!sender.voted, "Already voted.");
         sender.voted = true;
         sender.vote = candidate;
-
-        // If 'proposal' is out of the range of the array,
-        // this will throw automatically and revert all
-        // changes.
         candidates[candidate].voteCount += 1;
     }
 
-    function winningCandidate() public view returns (uint _winningCandidate) {
+    function winningCandidate() public override view returns (uint _winningCandidate) {
         uint winningVoteCount = 0;
 
         for (uint p = 0; p < candidates.length; p++) {
@@ -46,7 +42,7 @@ contract VotingPoll is IVotingPoll {
         }
     }
 
-    function winnerName() public view returns (string memory _winnerName) {
+    function winnerName() public override view returns (string memory _winnerName) {
         _winnerName = candidates[winningCandidate()].name;
     }
 }

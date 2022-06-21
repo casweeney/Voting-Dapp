@@ -6,7 +6,7 @@ import './VotingPoll.sol';
 contract VotingFactory {
     address[] public votingPolls;
 
-    function allVotinPolls() external view returns (uint) {
+    function allVotingPolls() external view returns (uint) {
         return votingPolls.length;
     }
 
