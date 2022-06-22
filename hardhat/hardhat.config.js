@@ -5,6 +5,8 @@ const ALCHEMY_RINKEBY_API_KEY_URL = process.env.ALCHEMY_RINKEBY_API_KEY_URL;
 
 const INFURA_ROPSTEN_API_KEY_URL = process.env.INFURA_ROPSTEN_API_KEY_URL;
 
+const MORALIS_ROPSTEN_API_KEY_URL = process.env.MORALIS_ROPSTEN_API_KEY_URL;
+
 const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY;
 
 module.exports = {
@@ -15,7 +17,7 @@ module.exports = {
       accounts: [ACCOUNT_PRIVATE_KEY],
     },
     ropsten: {
-      url: INFURA_ROPSTEN_API_KEY_URL,
+      url: MORALIS_ROPSTEN_API_KEY_URL,
       accounts: [ACCOUNT_PRIVATE_KEY],
     }
   },

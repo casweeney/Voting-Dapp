@@ -14,7 +14,7 @@ contract VotingFactory {
     external returns(address votingPoll) 
     {
         bytes memory bytecode = type(VotingPoll).creationCode;
-        bytes32 salt = keccak256(abi.encodePacked(address(0)));
+        bytes32 salt = keccak256(abi.encodePacked(block.timestamp));
         assembly{
             votingPoll := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }

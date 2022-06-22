@@ -1,4 +1,2 @@
-VotingFactory Rinkeby Contract address = 0x14E96EE02f395154e869Fa85886aE9533578Ba4f
-VotingFactory Ropsten Contract address = 0x0519C43Cdf9B75Ba0a265B3330655A0cAF6D4ED3
-
-New Rinkeby contract address = 0x41653E44A0E093dA248C0c1F3C96c89A2530f764
+VotingFactory Rinkeby Contract address = 0x9Cf69fA7F337d5A7564dB324a35d92655046c5B2
+VotingFactory Ropsten Contract address = 0xD410219f5C87247d3F109695275A70Da7805f1b1

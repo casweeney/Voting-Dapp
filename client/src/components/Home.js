@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Contract, providers } from 'ethers';
-import { formatEther } from 'ethers/lib/utils';
 import Web3Modal from 'web3modal';
 import {
     VOTING_FACTORY_CONTRACT_ADDRESS,
@@ -9,8 +8,8 @@ import {
 
 const Home = () => {
 
-    const CHAIN_ID = 4;
-    const NETWORK_NAME = "rinkeby";
+    const CHAIN_ID = 3;
+    const NETWORK_NAME = "ropsten";
 
     //const [votingPolls, setVotingPolls] = useState([]);
     const [numVotingPolls, setNumVotingPolls] = useState(0);
@@ -126,21 +125,29 @@ const Home = () => {
     }
 
     const renderCreatePollTab = () => {
-        return (
-            <div className="mt-4">
-              <form>
-                  <div className="form-group">
-                    <label htmlFor="pollTitle">Poll Title</label>
-                    <input type="text" id="pollTitle" value={enteredTitle} onChange={titleChangeHandler} className="form-control" placeholder="Best innovator" />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="options">Voting Options: separated by commas: option1,option2,option3</label>
-                    <input type="text" id="options" value={enteredOptions} onChange={optionsChangeHandler} className="form-control" placeholder="Vitalik,Jack,Satoshi" />
-                  </div>
-                  <button onClick={createPoll} className="btn btn-primary">Create Poll</button>
-              </form>
-            </div>
-        );
+        if(loading) {
+            return (
+                <div className="mt-4">
+                    Loading... Waiting for transaction...
+                </div>
+            );
+        } else {
+            return (
+                <div className="mt-4">
+                  <form>
+                      <div className="form-group">
+                        <label htmlFor="pollTitle">Poll Title</label>
+                        <input type="text" id="pollTitle" value={enteredTitle} onChange={titleChangeHandler} className="form-control" placeholder="Best innovator" />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="options">Voting Options: separated by commas: option1,option2,option3</label>
+                        <input type="text" id="options" value={enteredOptions} onChange={optionsChangeHandler} className="form-control" placeholder="Vitalik,Jack,Satoshi" />
+                      </div>
+                      <button onClick={createPoll} className="btn btn-primary">Create Poll</button>
+                  </form>
+                </div>
+            );
+        }
     }
 
     function renderViewPollsTab() {
