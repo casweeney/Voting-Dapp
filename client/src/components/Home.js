@@ -22,8 +22,15 @@ const Home = () => {
 
     const connectWallet = async () => {
         try {
+            web3ModalRef.current = new Web3Modal({
+                network: NETWORK_NAME,
+                providerOptions: {},
+                disableInjectedProvider: false,
+            });
+
             await getProviderOrSigner();
             setWalletConnected(true);
+            getNumVotingPolls();
         } catch (error) {
             console.log(error);
         }
@@ -93,19 +100,25 @@ const Home = () => {
         );
     };
 
+    // useEffect(() => {
+    //     if(!walletConnected) {
+    //         web3ModalRef.current = new Web3Modal({
+    //             network: NETWORK_NAME,
+    //             providerOptions: {},
+    //             disableInjectedProvider: false,
+    //         });
+
+    //         connectWallet().then(() => {
+    //             getNumVotingPolls();
+    //         });
+    //     }
+    // }, [walletConnected]);
+
     useEffect(() => {
         if(!walletConnected) {
-            web3ModalRef.current = new Web3Modal({
-                network: NETWORK_NAME,
-                providerOptions: {},
-                disableInjectedProvider: false,
-            });
-
-            connectWallet().then(() => {
-                getNumVotingPolls();
-            });
+            connectWallet();
         }
-    }, [walletConnected]);
+    })
 
     const titleChangeHandler = (e) => {
         setEnteredTitle(e.target.value);
