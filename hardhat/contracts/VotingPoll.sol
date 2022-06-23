@@ -23,6 +23,10 @@ contract VotingPoll is IVotingPoll {
         }
     }
 
+    function fetchCandidates() external view returns (Candidate[] memory) {
+        return candidates;
+    }
+
     function vote(uint candidate) public override {
         Voter storage sender = voters[msg.sender];
         require(!sender.voted, "Already voted.");
