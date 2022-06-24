@@ -26,7 +26,7 @@ const Home = () => {
     const web3ModalRef = useRef();
 
 
-    // Helper function to fetch a Provider/Signer instance from Metamask
+    // Helper function to fetch a Provider instance from Metamask
     const getProvider = useCallback(async () => {
         const provider = await web3ModalRef.current.connect();
         const web3Provider = new providers.Web3Provider(provider);
@@ -45,6 +45,7 @@ const Home = () => {
         setProvider(web3Provider);
     }, []);
 
+    // Helper function to fetch a Signer instance from Metamask
     const getSigner = useCallback(async () => {
         const web3Modal = await web3ModalRef.current.connect();
         const web3Provider = new providers.Web3Provider(web3Modal);
@@ -63,7 +64,7 @@ const Home = () => {
         
     }, []);
 
-            // Helper function to return a VotingFactory Contract instance
+    // Helper function to return a VotingFactory Contract instance
     // given a Provider/Signer
     const getVotingFactoryInstance = useCallback((providerOrSigner) => {
         return new Contract(
@@ -73,6 +74,8 @@ const Home = () => {
         );
     },[]);
 
+    // Helper function to return a VotingPoll Contract instance // receiving the contract address as argument
+    // given a Provider/Signer
     const getVotingPollInstance = useCallback((providerOrSigner, votingPollContractAddress) => {
         return new Contract(
             votingPollContractAddress,
@@ -128,9 +131,7 @@ const Home = () => {
                 });
             }
 
-            console.log(polls.length)
             setVotingPolls(polls);
-            console.log("here");
 
         } catch (error) {
             console.error(error);
@@ -179,7 +180,7 @@ const Home = () => {
                 setLoading(true);
                 await txn.wait();
                 await getNumVotingPolls();
-                // await getAllVotingPolls();
+                await getAllVotingPolls();
                 setLoading(false);
                 setEnteredTitle('');
                 setEnteredOptions('');
@@ -215,7 +216,7 @@ const Home = () => {
                 const txn = await VotingPollContract.vote(+selectedOption);
                 setVoteLoading(true);
                 await txn.wait();
-                // await getAllVotingPolls();
+                await getAllVotingPolls();
                 setSelectedOption('');
                 setVoteLoading(false);
             } catch (error) {
