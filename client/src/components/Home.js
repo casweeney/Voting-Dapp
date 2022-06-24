@@ -301,7 +301,7 @@ const Home = () => {
     
     return (
         <div className="row" style={{ alignItems: 'center' }}>
-            <div className="col-md-6">
+            <div className="col-md-6 mb-4">
                 <h1>GoVote dApp</h1>
                 <h4>A simple voting decentralized app</h4>
                 <p>Want to vote? Click on view polls and vote accordingly or create a poll for others to vote.</p>
