@@ -35,6 +35,11 @@ contract VotingPoll is IVotingPoll {
         candidates[candidate].voteCount += 1;
     }
 
+    function hasVote(address _address) external view returns (bool) {
+        Voter storage sender = voters[address(_address)];
+        return sender.voted;
+    }
+
     function winningCandidate() public override view returns (uint _winningCandidate) {
         uint winningVoteCount = 0;
 

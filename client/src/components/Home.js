@@ -12,6 +12,12 @@ const Home = () => {
     const CHAIN_ID = 3;
     const NETWORK_NAME = "ropsten";
 
+    useEffect(() => {
+        if(!walletConnected) {
+            connectWallet();
+        }
+    });
+
     const [votingPolls, setVotingPolls] = useState([]);
     const [selectedOption, setSelectedOption] = useState('');
     const [numVotingPolls, setNumVotingPolls] = useState(0);
@@ -21,6 +27,7 @@ const Home = () => {
     const [walletConnected, setWalletConnected] = useState(false);
     const [enteredTitle, setEnteredTitle] = useState('');
     const [enteredOptions, setEnteredOptions] = useState('');
+    const [account, setAccount] = useState('');
     const web3ModalRef = useRef();
 
     const connectWallet = async () => {
@@ -36,7 +43,7 @@ const Home = () => {
             getNumVotingPolls();
             getAllVotingPolls();
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     }
 
@@ -54,10 +61,17 @@ const Home = () => {
                 const title = await votingPollContract.title();
                 const options = await votingPollContract.fetchCandidates();
 
+                console.log(poll, "0x617cd3DB0CbF26F323D5b72975c5311343e09115");
+                console.log(options);
+                const userVoted = await hasVoted(poll);
+
+                console.log(userVoted);
+
                 const pollDetails = {
                     address: poll,
                     title: title,
-                    options: options
+                    options: options,
+                    voted: userVoted
                 };
 
                 polls.push(pollDetails)
@@ -68,7 +82,7 @@ const Home = () => {
         } catch (error) {
           console.error(error);
         }
-      };
+    };
 
     const getNumVotingPolls = async () => {
         try {
@@ -77,7 +91,18 @@ const Home = () => {
             const totalNumVotingPolls = await contract.allVotingPolls();
             setNumVotingPolls(totalNumVotingPolls.toString());
         } catch (error) {
-            console.log(error);
+            console.error(error);
+        }
+    }
+
+    const hasVoted = async (pollAddress) => {
+        try {
+            const provider = await getProviderOrSigner();
+            const votingPollContract = getVotingPollInstance(provider, pollAddress);
+            const userVoted = await votingPollContract.hasVote("0x617cd3DB0CbF26F323D5b72975c5311343e09115");
+            return userVoted;
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -110,8 +135,14 @@ const Home = () => {
     const getProviderOrSigner = async (needSigner = false) => {
         const provider = await web3ModalRef.current.connect();
         const web3Provider = new providers.Web3Provider(provider);
+        const getSigner = web3Provider.getSigner();
 
         const { chainId } = await web3Provider.getNetwork();
+
+        // console.log(web3Provider._getAddress);
+        setAccount(await getSigner.getAddress());
+
+
         if (chainId !== CHAIN_ID) {
         window.alert(`Please switch to the ${NETWORK_NAME} network!`);
             throw new Error(`Please switch to the ${NETWORK_NAME} network`);
@@ -142,26 +173,6 @@ const Home = () => {
         )
     }
 
-    // useEffect(() => {
-    //     if(!walletConnected) {
-    //         web3ModalRef.current = new Web3Modal({
-    //             network: NETWORK_NAME,
-    //             providerOptions: {},
-    //             disableInjectedProvider: false,
-    //         });
-
-    //         connectWallet().then(() => {
-    //             getNumVotingPolls();
-    //         });
-    //     }
-    // }, [walletConnected]);
-
-    useEffect(() => {
-        if(!walletConnected) {
-            connectWallet();
-        }
-    })
-
     const titleChangeHandler = (e) => {
         setEnteredTitle(e.target.value);
     }
@@ -186,7 +197,7 @@ const Home = () => {
                 const txn = await VotingPollContract.vote(+selectedOption);
                 setVoteLoading(true);
                 await txn.wait();
-
+                setSelectedOption('');
                 setVoteLoading(false);
             } catch (error) {
                 console.error(error);
@@ -241,12 +252,13 @@ const Home = () => {
                             <form>
                                 {poll.options.length > 0 && poll.options.map((option, index) => (
                                     <p key={poll.address.concat(index)} className="font-weight-bold text-primary" style={{fontSize: '20px'}}>
-                                    {option.name} {" "} <input value={index} type="radio" name="pollOption" onChange={optionChangeHandler} /> {" "}
+                                    {option.name} {" "} <input value={index} disabled={poll.voted ? "disabled" : ""} type="radio" name="pollOption" onChange={optionChangeHandler} /> {" "}
+                                    <span className="ml-5" style={{fontSize: '16px', color: '#000', display: 'inline-block'}}>{poll.voted ? `${option.voteCount.toNumber()} votes` : ""}</span>
                                     </p>
                                 ))}
 
                                 {!voteLoading ? 
-                                    <button onClick={(e) => voteClickHandler(e, poll.address)} className="btn btn-primary btn-block">Vote</button> 
+                                    <button onClick={(e) => voteClickHandler(e, poll.address)} disabled={poll.voted ? "disabled" : ""} className="btn btn-primary btn-block">{poll.voted ? "Already Voted" : "Vote"}</button> 
                                     : 
                                     <div className="mt-4">
                                         Loading... Waiting for transaction...

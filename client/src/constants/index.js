@@ -1,4 +1,4 @@
-export const VOTING_FACTORY_CONTRACT_ADDRESS = "0x0fb2EE8CE952D89f09DE61Ea66e1FDF35800401f";
+export const VOTING_FACTORY_CONTRACT_ADDRESS = "0xEEE5eD1d12B62eAe4513e28d66E4EA300005891A";
 
 export const VOTING_FACTORY_ABI = [
   {
@@ -153,6 +153,25 @@ export const VOTING_POLL_ABI = [
         "internalType": "struct IVotingPoll.Candidate[]",
         "name": "",
         "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_address",
+        "type": "address"
+      }
+    ],
+    "name": "hasVote",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
