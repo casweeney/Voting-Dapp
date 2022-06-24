@@ -306,8 +306,8 @@ const Home = () => {
                 <h4>A simple voting decentralized app</h4>
                 <p>Want to vote? Click on view polls and vote accordingly or create a poll for others to vote.</p>
                 {!walletConnected ? 
-                    <button className="btn btn-danger btn-lg" onClick={connectWallet}>Connect Wallet</button> : 
-                    <div>
+                    <button className="btn btn-danger btn-lg mb-4" onClick={connectWallet}>Connect Wallet</button> : 
+                    <div className="mb-4">
                         <p>Total Voting Polls: {numVotingPolls}</p>
                         <div className="">
                             <button className="btn btn-info" onClick={() => setSelectedTab("Create Poll")}>Create Polls</button> {" "}
