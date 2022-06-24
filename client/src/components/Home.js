@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Contract, providers } from 'ethers';
 import Web3Modal from 'web3modal';
 import {
@@ -12,12 +12,6 @@ const Home = () => {
     const CHAIN_ID = 3;
     const NETWORK_NAME = "ropsten";
 
-    useEffect(() => {
-        if(!walletConnected) {
-            connectWallet();
-        }
-    });
-
     const [votingPolls, setVotingPolls] = useState([]);
     const [selectedOption, setSelectedOption] = useState('');
     const [numVotingPolls, setNumVotingPolls] = useState(0);
@@ -28,9 +22,122 @@ const Home = () => {
     const [enteredTitle, setEnteredTitle] = useState('');
     const [enteredOptions, setEnteredOptions] = useState('');
     const [account, setAccount] = useState('');
+    const [provider, setProvider] = useState(null)
     const web3ModalRef = useRef();
 
-    const connectWallet = async () => {
+
+    // Helper function to fetch a Provider/Signer instance from Metamask
+    const getProvider = useCallback(async () => {
+        const provider = await web3ModalRef.current.connect();
+        const web3Provider = new providers.Web3Provider(provider);
+        const getSigner = web3Provider.getSigner();
+
+        const { chainId } = await web3Provider.getNetwork();
+
+        setAccount(await getSigner.getAddress());
+        setWalletConnected(true)
+
+
+        if (chainId !== CHAIN_ID) {
+        window.alert(`Please switch to the ${NETWORK_NAME} network!`);
+            throw new Error(`Please switch to the ${NETWORK_NAME} network`);
+        }
+        setProvider(web3Provider);
+    }, []);
+
+    const getSigner = useCallback(async () => {
+        const web3Modal = await web3ModalRef.current.connect();
+        const web3Provider = new providers.Web3Provider(web3Modal);
+
+        const { chainId } = await web3Provider.getNetwork();
+
+
+        if (chainId !== CHAIN_ID) {
+        window.alert(`Please switch to the ${NETWORK_NAME} network!`);
+            throw new Error(`Please switch to the ${NETWORK_NAME} network`);
+        }
+        
+        const signer = web3Provider.getSigner();
+        return signer;
+            
+        
+    }, []);
+
+            // Helper function to return a VotingFactory Contract instance
+    // given a Provider/Signer
+    const getVotingFactoryInstance = useCallback((providerOrSigner) => {
+        return new Contract(
+            VOTING_FACTORY_CONTRACT_ADDRESS,
+            VOTING_FACTORY_ABI,
+            providerOrSigner
+        );
+    },[]);
+
+    const getVotingPollInstance = useCallback((providerOrSigner, votingPollContractAddress) => {
+        return new Contract(
+            votingPollContractAddress,
+            VOTING_POLL_ABI,
+            providerOrSigner
+        )
+    },[])
+
+    const getNumVotingPolls = useCallback(async () => {
+        try {
+            const contract = getVotingFactoryInstance(provider);
+            const totalNumVotingPolls = await contract.allVotingPolls();
+            setNumVotingPolls(totalNumVotingPolls.toString());
+        } catch (error) {
+            console.error(error);
+        }
+    },[getVotingFactoryInstance, provider])
+
+    const hasVoted = useCallback(async (pollAddress) => {
+        try {
+            const votingPollContract = getVotingPollInstance(provider, pollAddress);
+            const userVoted = await votingPollContract.hasVote(account);
+            return userVoted;
+        } catch (error) {
+            console.error(error);
+        }
+    },[account, provider, getVotingPollInstance])
+
+
+    const getAllVotingPolls = useCallback(async () => {
+        try {
+            const factroryContract = getVotingFactoryInstance(provider);
+            const allPolls = await factroryContract.getAllVotingPolls();
+
+            const polls = [];
+
+            if(allPolls.length > 0){
+                allPolls.map(async (poll) => {
+                    const votingPollContract = getVotingPollInstance(provider,poll);
+                    const title = await votingPollContract.title();
+                    const options = await votingPollContract.fetchCandidates();
+
+                    const userVoted = await hasVoted(poll);
+
+                    const pollDetails = {
+                        address: poll,
+                        title: title,
+                        options: options,
+                        voted: userVoted
+                    };
+
+                    polls.push(pollDetails)
+                });
+            }
+
+            console.log(polls.length)
+            setVotingPolls(polls);
+            console.log("here");
+
+        } catch (error) {
+            console.error(error);
+        }
+    }, [getVotingFactoryInstance, getVotingPollInstance, hasVoted, provider]);
+
+    const connectWallet = useCallback(async () => {
         try {
             web3ModalRef.current = new Web3Modal({
                 network: NETWORK_NAME,
@@ -38,73 +145,25 @@ const Home = () => {
                 disableInjectedProvider: false,
             });
 
-            await getProviderOrSigner();
-            setWalletConnected(true);
-            getNumVotingPolls();
-            getAllVotingPolls();
+            await getProvider();
         } catch (error) {
             console.error(error);
         }
-    }
+    },[getProvider])
 
-    const getAllVotingPolls = async () => {
-        try {
-          const provider = await getProviderOrSigner();
-          const factroryContract = getVotingFactoryInstance(provider);
-          const allPolls = await factroryContract.getAllVotingPolls();
+    useEffect(() => {
 
-          const polls = [];
-
-          if(allPolls.length > 0){
-              allPolls.map(async (poll) => {
-                const votingPollContract = getVotingPollInstance(provider,poll);
-                const title = await votingPollContract.title();
-                const options = await votingPollContract.fetchCandidates();
-
-                console.log(poll, "0x617cd3DB0CbF26F323D5b72975c5311343e09115");
-                console.log(options);
-                const userVoted = await hasVoted(poll);
-
-                console.log(userVoted);
-
-                const pollDetails = {
-                    address: poll,
-                    title: title,
-                    options: options,
-                    voted: userVoted
-                };
-
-                polls.push(pollDetails)
-              });
-          }
-
-          setVotingPolls(polls);
-        } catch (error) {
-          console.error(error);
+        const fetchPolls = async () => {
+            if(account && provider){
+                await getNumVotingPolls();
+                await getAllVotingPolls();
+            }
         }
-    };
 
-    const getNumVotingPolls = async () => {
-        try {
-            const provider = await getProviderOrSigner();
-            const contract = getVotingFactoryInstance(provider);
-            const totalNumVotingPolls = await contract.allVotingPolls();
-            setNumVotingPolls(totalNumVotingPolls.toString());
-        } catch (error) {
-            console.error(error);
-        }
-    }
+        fetchPolls()
+    
+    }, [account, provider, getNumVotingPolls, getAllVotingPolls])
 
-    const hasVoted = async (pollAddress) => {
-        try {
-            const provider = await getProviderOrSigner();
-            const votingPollContract = getVotingPollInstance(provider, pollAddress);
-            const userVoted = await votingPollContract.hasVote("0x617cd3DB0CbF26F323D5b72975c5311343e09115");
-            return userVoted;
-        } catch (error) {
-            console.error(error);
-        }
-    }
 
     const createPoll = async (e) => {
         e.preventDefault();
@@ -114,12 +173,13 @@ const Home = () => {
         } else {
             try {
                 const optionsArray = enteredOptions.split(',');
-                const signer = await getProviderOrSigner(true);
+                const signer = await getSigner();
                 const factoryContract = getVotingFactoryInstance(signer);
                 const txn = await factoryContract.createPoll(enteredTitle, optionsArray);
                 setLoading(true);
                 await txn.wait();
                 await getNumVotingPolls();
+                // await getAllVotingPolls();
                 setLoading(false);
                 setEnteredTitle('');
                 setEnteredOptions('');
@@ -130,48 +190,6 @@ const Home = () => {
         }
     }
 
-
-    // Helper function to fetch a Provider/Signer instance from Metamask
-    const getProviderOrSigner = async (needSigner = false) => {
-        const provider = await web3ModalRef.current.connect();
-        const web3Provider = new providers.Web3Provider(provider);
-        const getSigner = web3Provider.getSigner();
-
-        const { chainId } = await web3Provider.getNetwork();
-
-        // console.log(web3Provider._getAddress);
-        setAccount(await getSigner.getAddress());
-
-
-        if (chainId !== CHAIN_ID) {
-        window.alert(`Please switch to the ${NETWORK_NAME} network!`);
-            throw new Error(`Please switch to the ${NETWORK_NAME} network`);
-        }
-
-        if (needSigner) {
-            const signer = web3Provider.getSigner();
-            return signer;
-        }
-        return web3Provider;
-    };
-
-    // Helper function to return a VotingFactory Contract instance
-    // given a Provider/Signer
-    const getVotingFactoryInstance = (providerOrSigner) => {
-        return new Contract(
-            VOTING_FACTORY_CONTRACT_ADDRESS,
-            VOTING_FACTORY_ABI,
-            providerOrSigner
-        );
-    };
-
-    const getVotingPollInstance = (providerOrSigner, votingPollContractAddress) => {
-        return new Contract(
-            votingPollContractAddress,
-            VOTING_POLL_ABI,
-            providerOrSigner
-        )
-    }
 
     const titleChangeHandler = (e) => {
         setEnteredTitle(e.target.value);
@@ -192,11 +210,12 @@ const Home = () => {
             alert('Select a voting option');
         } else {
             try {
-                const signer = await getProviderOrSigner(true);
+                const signer = await getSigner();
                 const VotingPollContract = getVotingPollInstance(signer, pollContractAddress);
                 const txn = await VotingPollContract.vote(+selectedOption);
                 setVoteLoading(true);
                 await txn.wait();
+                // await getAllVotingPolls();
                 setSelectedOption('');
                 setVoteLoading(false);
             } catch (error) {
@@ -205,14 +224,12 @@ const Home = () => {
         }
     }
 
-    const renderTabs = () => {
-        if (selectedTab === "Create Poll") {
-          return renderCreatePollTab();
-        } else if (selectedTab === "View Polls") {
-          return renderViewPollsTab();
+
+    useEffect(() => {
+        if(!walletConnected) {
+            connectWallet();
         }
-        return null;
-    }
+    }, [walletConnected, connectWallet]);
 
     const renderCreatePollTab = () => {
         if(loading) {
@@ -271,6 +288,15 @@ const Home = () => {
             </div>
         ); 
     }
+
+    const renderTabs = () => {
+        if (selectedTab === "Create Poll") {
+          return renderCreatePollTab();
+        } else if (selectedTab === "View Polls") {
+          return renderViewPollsTab();
+        }
+        return null;
+    };
     
     return (
         <div className="row" style={{ alignItems: 'center' }}>
